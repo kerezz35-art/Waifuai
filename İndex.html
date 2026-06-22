@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WaifuAI - Platform</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: '-apple-system', BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        body { background-color: #000000; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+        header { background-color: #000000; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #111; position: sticky; top: 0; z-index: 10; }
+        .logo { font-size: 1.4rem; font-weight: 800; color: #ff3366; text-shadow: 0 0 10px rgba(255, 51, 102, 0.4); font-style: italic; }
+        .kredi { background: linear-gradient(135deg, #ff3366, #ff6699); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; }
+
+        .ana-icerik { flex: 1; overflow-y: auto; padding-bottom: 80px; display: none; }
+        .active-pane { display: block; }
+
+        .ayirici-cizgi { border: 0; height: 1px; background: #1a1a1a; margin: 20px 0; }
+
+        .kesfet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 15px; }
+        .kesfet-kart { background: #111; border-radius: 16px; overflow: hidden; position: relative; border: 1px solid #222; display: flex; flex-direction: column; height: 260px; cursor: pointer; }
+        .kart-resim-alan { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; background: linear-gradient(180deg, #1a1a2e, #111); }
+        .kart-resim-alan img { width: 100%; height: 100%; object-fit: cover; }
+        .kart-resim-alan .emoji-avatar { font-size: 4rem; }
+        .kart-bilgi { padding: 10px; background: rgba(0, 0, 0, 0.85); position: absolute; bottom: 0; left: 0; width: 100%; }
+        .kart-isim { font-size: 1rem; font-weight: bold; margin-bottom: 4px; }
+        .kart-aciklama { font-size: 0.75rem; color: #aaa; line-height: 1.3; height: 32px; overflow: hidden; }
+        .kart-etiketler { display: flex; gap: 5px; margin-top: 6px; }
+        .etiket { background: #222; color: #ff3366; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #333; }
+        .sayac-etiket { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); padding: 3px 8px; border-radius: 10px; font-size: 0.65rem; z-index: 2; }
+
+        .sohbet-liste { display: flex; flex-direction: column; padding: 10px 0; }
+        .sohbet-satir { display: flex; align-items: center; padding: 14px 20px; border-bottom: 1px solid #111; cursor: pointer; transition: background 0.2s; }
+        .sohbet-satir:hover { background: #0a0a0a; }
+        
+        .sohbet-avatar { width: 50px; height: 50px; border-radius: 50%; overflow: hidden; background: #1a1a1a; display: flex; align-items: center; justify-content: center; border: 1px solid #222; flex-shrink: 0; margin-right: 15px; font-size: 1.5rem; }
+        .sohbet-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .sohbet-detay { flex: 1; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+        .sohbet-ust-satir { display: flex; justify-content: space-between; align-items: center; }
+        .sohbet-isim { font-size: 1rem; font-weight: bold; color: #fff; }
+        .sohbet-zaman { font-size: 0.75rem; color: #555; }
+        .sohbet-son-mesaj { font-size: 0.85rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .olustur-alan { padding: 25px 20px; }
+        .form-grup { margin-bottom: 15px; }
+        .form-grup label { display: block; font-size: 0.85rem; font-weight: bold; color: #aaa; margin-bottom: 6px; }
+        .form-grup input, .form-grup textarea { width: 100%; background: #111; border: 1px solid #333; border-radius: 12px; padding: 14px; color: white; font-size: 0.95rem; }
+        .form-grup textarea { height: 100px; resize: none; }
+        .form-grup input:focus, .form-grup textarea:focus { border-color: #ff3366; outline: none; }
+        
+        .dosya-yukle-alan { position: relative; display: flex; align-items: center; gap: 10px; background: #111; border: 1px dashed #444; padding: 12px; border-radius: 12px; cursor: pointer; }
+        .dosya-yukle-alan input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        .dosya-yukle-btn { background: #222; border: 1px solid #333; padding: 8px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: bold; color: #ff3366; }
+        .dosya-onizleme-metni { font-size: 0.8rem; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+
+        .btn-genel { width: 100%; background: #ff3366; color: white; border: none; padding: 14px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; }
+
+        .profil-alan { padding: 20px; }
+        .auth-form { background: #111; border: 1px solid #222; padding: 20px; border-radius: 16px; }
+        .profil-gosterim { display: none; text-align: center; }
+        .profil-avatar { width: 80px; height: 80px; border-radius: 50%; background: #222; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; overflow: hidden; border: 2px solid #ff3366; }
+        .profil-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profil-istatistik { display: flex; justify-content: center; gap: 30px; margin: 15px 0; }
+        .stat-kutu { text-align: center; }
+        .stat-rakam { font-size: 1.1rem; font-weight: bold; }
+        .stat-isim { font-size: 0.75rem; color: #666; }
+        .btn-cikis { background: #222; color: #ff3366; border: 1px solid #333; margin-top: 10px; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        
+        .vip-baslik { font-size: 1.2rem; font-weight: bold; margin: 25px 0 15px; color: #ff3366; text-align: left; display: flex; align-items: center; gap: 8px; }
+        .vip-container { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .vip-kart { background: #111; border: 1px solid #222; border-radius: 16px; padding: 18px; position: relative; text-align: left; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.3s; }
+        .vip-kart.dunya-lideri { border-color: #ff3366; background: linear-gradient(145deg, #111, #1a050a); }
+        .vip-ust-satir { display: flex; justify-content: space-between; align-items: center; }
+        .vip-unvan { font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .vip-fiyat { font-size: 1.1rem; font-weight: 800; color: #ff3366; }
+        .vip-ozellikler { list-style: none; font-size: 0.85rem; color: #ccc; display: flex; flex-direction: column; gap: 4px; margin-top: 5px; }
+        .vip-ozellikler li { display: flex; align-items: center; gap: 6px; }
+        .vip-ozellikler li::before { content: "⚡"; color: #ff3366; font-size: 0.8rem; }
+        .btn-satin-al { background: #222; border: 1px solid #333; color: white; padding: 8px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: bold; cursor: pointer; text-align: center; margin-top: 8px; transition: all 0.2s; }
+        .vip-kart.dunya-lideri .btn-satin-al { background: #ff3366; border: none; }
+
+        .panel-kutu { background: #111; border: 1px solid #222; padding: 15px; border-radius: 12px; margin-top: 10px; }
+        .panel-kutu h4 { font-size: 0.95rem; margin-bottom: 8px; color: #ff3366; }
+        .panel-kutu p { font-size: 0.8rem; color: #aaa; line-height: 1.4; }
+
+        #sohbet-penceresi { display: none; flex-direction: column; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; }
+        .pencere-header { background: rgba(0,0,0,0.8); backdrop-filter: blur(5px); padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #111; z-index: 2; }
+        .kapat-btn { background: none; border: none; color: #ff3366; font-size: 1.3rem; cursor: pointer; padding-right: 15px; }
+        
+        .pencere-govde { flex: 1; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+        .sohbet-arka-plan-gorsel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0.35; pointer-events: none; z-index: 0; user-select: none; background-position: center; background-repeat: no-repeat; background-size: cover; display: flex; align-items: center; justify-content: center; font-size: 15rem; }
+        
+        .pencere-mesajlar { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; z-index: 1; position: relative; background: transparent; }
+        .balon { max-width: 80%; padding: 12px 16px; border-radius: 20px; font-size: 0.95rem; line-height: 1.4; z-index: 1; }
+        .b-user { background: #ff3366; color: white; align-self: flex-end; border-bottom-right-radius: 2px; }
+        .b-bot { background: rgba(22, 22, 22, 0.85); color: #fff; align-self: flex-start; border-bottom-left-radius: 2px; border: 1px solid #222; backdrop-filter: blur(2px); }
+        
+        .pencere-girdi { padding: 15px; background: #000; display: flex; gap: 10px; border-top: 1px solid #111; z-index: 2; }
+        .pencere-girdi input { flex: 1; padding: 14px; border-radius: 25px; border: 1px solid #222; background: #111; color: white; font-size: 1rem; padding-left: 20px; }
+        .pencere-girdi input:focus { border-color: #ff3366; outline: none; }
+        .pencere-gonder { background: #ff3366; color: white; border: none; padding: 0 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+
+        nav { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(0, 0, 0, 0.95); backdrop-filter: blur(10px); border-top: 1px solid #111; display: flex; justify-content: space-around; padding: 12px 0; z-index: 10; }
+        .nav-link { color: #555; text-decoration: none; display: flex; flex-direction: column; align-items: center; gap: 4px; font-size: 0.7rem; font-weight: bold; cursor: pointer; background: none; border: none; }
+        .nav-link.active { color: #ff3366; }
+        .nav-link svg { width: 22px; height: 22px; fill: currentColor; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; padding: 20px; z-index: 999; }
+        .modal-icerik { background: #111; padding: 30px; border-radius: 20px; text-align: center; max-width: 360px; width: 100%; border: 1px solid #ff3366; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <span class="logo">🔮✨ WaifuAI</span>
+        <span class="kredi">💖 Hak: <span id="kredi-sayac">5</span></span>
+    </header>
+
+    <div id="pane-kesfet" class="ana-icerik active-pane">
+        <div class="kesfet-grid" id="kesfet-grid"></div>
+    </div>
+
+    <div id="pane-sohbetler" class="ana-icerik">
+        <div class="sohbet-liste" id="ana-sohbet-listesi"></div>
+    </div>
+
+    <div id="pane-olustur" class="ana-icerik">
+        <div class="olustur-alan">
+            <h2 style="margin-bottom: 20px; font-size: 1.4rem;">Yeni Bir Karakter Yarat</h2>
+            <div class="form-grup">
+                <label>Karakter İsmi</label>
+                <input type="text" id="yeni-isim" placeholder="Örn: Garou">
+            </div>
+            <div class="form-grup">
+                <label>Karakter Görseli (Galeriden Seç)</label>
+                <div class="dosya-yukle-alan">
+                    <button class="dosya-yukle-btn">Görüntü Ekle 🖼️</button>
+                    <span class="dosya-onizleme-metni" id="yeni-gorsel-etiket">Görsel seçilmedi</span>
+                    <input type="file" id="yeni-gorsel-dosya" accept="image/*">
+                </div>
+            </div>
+            <div class="form-grup">
+                <label>Karakter Kişilik Yapısı & Talimatları</label>
+                <textarea id="yeni-talimat" placeholder="Karakterin kuracağı cümleleri, tavırlarını ve dünyasını buraya aktar..."></textarea>
+            </div>
+            <button class="btn-genel" id="btn-karakter-ekle">Karakteri Dünyaya Getir ✨</button>
+        </div>
+    </div>
+
+    <div id="pane-profil" class="ana-icerik">
+        <div class="profil-alan">
+            <div id="auth-kutusu" class="auth-form">
+                <h3 style="margin-bottom: 15px; font-size: 1.2rem;">Hesap Aç / Giriş Yap</h3>
+                <div class="form-grup">
+                    <label>E-posta Adresi (Sadece @gmail.com)</label>
+                    <input type="email" id="auth-email" placeholder="ornek@gmail.com">
+                </div>
+                <div class="form-grup">
+                    <label>Profil Fotoğrafı (Galeriden Seç)</label>
+                    <div class="dosya-yukle-alan">
+                        <button class="dosya-yukle-btn">Görüntü Ekle 🖼️</button>
+                        <span class="dosya-onizleme-metni" id="auth-avatar-etiket">Görsel seçilmedi</span>
+                        <input type="file" id="auth-avatar-dosya" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-grup">
+                    <label>Şifre</label>
+                    <input type="password" id="auth-sifre" placeholder="••••••••">
+                </div>
+                <button class="btn-genel" id="btn-giris">Giriş Yap</button>
+            </div>
+
+            <div id="profil-kutusu" class="profil-gosterim">
+                <div class="profil-avatar" id="profil-avatar-kutusu">👑</div>
+                <h3 id="profil-kullanici-adi">Kullanıcı</h3>
+                <p id="profil-mail" style="color: #666; font-size: 0.8rem; margin-top: 4px;">user@gmail.com</p>
+                
+                <div class="form-grup" style="margin-top: 15px; text-align: left;">
+                    <label style="font-size: 0.75rem;">Profil Fotoğrafını Güncelle (Galeri)</label>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div class="dosya-yukle-alan" style="flex: 1; padding: 8px;">
+                            <button class="dosya-yukle-btn" style="padding: 6px 10px; font-size: 0.8rem;">Görsel Seç</button>
+                            <span class="dosya-onizleme-metni" id="profil-yeni-avatar-etiket" style="font-size: 0.75rem;">Seçilmedi</span>
+                            <input type="file" id="profil-yeni-avatar-dosya" accept="image/*">
+                        </div>
+                        <button class="btn-genel" style="width: auto; padding: 10px 15px; font-size: 0.85rem;" id="btn-profil-resmi-guncelle">Değiştir</button>
+                    </div>
+                </div>
+
+                <div class="profil-istatistik">
+                    <div class="stat-kutu"><div class="stat-rakam">214</div><div class="stat-isim">Sohbetler</div></div>
+                    <div class="stat-kutu"><div class="stat-rakam">12</div><div class="stat-isim">Karakterlerim</div></div>
+                </div>
+                <button class="btn-cikis" id="btn-cikis">Hesaptan Çıkış Yap</button>
+            </div>
+
+            <h3 class="vip-baslik">💎 VIP Üyelik Ayrıcalıkları</h3>
+            <div class="vip-container">
+                <div class="vip-kart">
+                    <div class="vip-ust-satir">
+                        <span class="vip-unvan">💼 Patron Plânı</span>
+                        <span class="vip-fiyat">50 TL <span style="font-size:0.7rem; color:#aaa;">/ay</span></span>
+                    </div>
+                    <ul class="vip-ozellikler">
+                        <li>En düşük ücretli avantajlı başlangıç paketi</li>
+                        <li>Daha fazla günlük mesaj hakkı</li>
+                        <li>Sıfır Reklam (Tamamen Reklamsız Deneyim)</li>
+                    </ul>
+                    <button class="btn-satin-al" data-plan="patron">Yükselt</button>
+                </div>
+
+                <div class="vip-kart">
+                    <div class="vip-ust-satir">
+                        <span class="vip-unvan">🚀 CEO Plânı</span>
+                        <span class="vip-fiyat">150 TL <span style="font-size:0.7rem; color:#aaa;">/ay</span></span>
+                    </div>
+                    <ul class="vip-ozellikler">
+                        <li>Patron planından çok daha fazla mesaj hakkı</li>
+                        <li>Sıfır Reklam (Kesintisiz İletişim)</li>
+                        <li>Öncelikli AI sunucu erişim hızı</li>
+                    </ul>
+                    <button class="btn-satin-al" data-plan="ceo">Yükselt</button>
+                </div>
+
+                <div class="vip-kart dunya-lideri">
+                    <div class="vip-ust-satir">
+                        <span class="vip-unvan">🌍 Dünya Lideri</span>
+                        <span class="vip-fiyat">250 TL <span style="font-size:0.7rem; color:#aaa;">/ay</span></span>
+                    </div>
+                    <ul class="vip-ozellikler">
+                        <li style="font-weight: bold; color: #ff3366;">Çok daha fazla mesaj hakkı (+100 Günlük Ekstra)</li>
+                        <li>Sıfır Reklam (Kalıcı olarak reklamlar gizlenir)</li>
+                        <li style="color: #ffcc00;">Kendi oluşturduğun botlar Keşfet'te en öne çıkacaktır!</li>
+                    </ul>
+                    <button class="btn-satin-al" data-plan="dunya-lideri">Dünyayı Yönet 🔥</button>
+                </div>
+            </div>
+
+            <hr class="ayirici-cizgi">
+            <div class="panel-kutu">
+                <h4>💡 Özellik & Karakter İstek Kutusu</h4>
+                <p style="margin-bottom: 10px;">Platformda görmek istediğiniz anime karakterlerini veya yeni özellikleri bize yazın!</p>
+                <div class="form-grup" style="margin-bottom: 8px;">
+                    <input type="text" id="istek-metin" placeholder="Gelecek güncellemede ne istersin?">
+                </div>
+                <button class="btn-genel" style="padding: 8px; font-size: 0.85rem;" id="btn-istek-gonder">İsteği İlet</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="sohbet-penceresi">
+        <div class="pencere-header">
+            <button class="kapat-btn" id="btn-pencere-kapat">←</button>
+            <h3 id="pencere-unvan">Karakter Odası</h3>
+        </div>
+        <div class="pencere-govde">
+            <div id="sohbet-arka-gorsel" class="sohbet-arka-plan-gorsel"></div>
+            <div class="pencere-mesajlar" id="pencere-mesaj-kutusu"></div>
+        </div>
+        <div class="pencere-girdi">
+            <input type="text" id="pencere-girdi-metin" placeholder="Mesajını yaz...">
+            <button class="pencere-gonder" id="btn-pencere-gonder">Gönder</button>
+        </div>
+    </div>
+
+    <div id="reklam-modal" class="modal">
+        <div class="modal-icerik">
+            <h2>Enerjin Bitti! 🔋</h2>
+            <p style="margin-top: 12px; color: #aaa; font-size: 0.9rem;">Sohbete devam etmek için reklamı izleyin.</p>
+            <button class="btn-genel" style="margin-top: 15px;" id="btn-reklam-izle">Reklamı İzle (+5 Hak)</button>
+        </div>
+    </div>
+
+    <nav>
+        <button class="nav-link active" data-sekme="kesfet">
+            <svg viewBox="0 0 24 24"><path d="M12 2L2 22h20L12 2zm0 3.99L19.53 19H4.47L12 5.99z"/></svg>
+            Keşfet
+        </button>
+        <button class="nav-link" data-sekme="sohbetler">
+            <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/></svg>
+            Sohbetler
+        </button>
+        <button class="nav-link" data-sekme="olustur">
+            <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+            Oluştur
+        </button>
+        <button class="nav-link" data-sekme="profil">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5-3-8-3z"/></svg>
+            Profil
+        </button>
+    </nav>
+
+    <script src="app.js"></script>
+</body>
+  </html>
